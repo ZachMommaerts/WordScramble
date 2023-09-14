@@ -12,6 +12,12 @@ struct ContentView: View {
     @State private var rootWord = ""
     @State private var newWord = ""
     
+    @State private var totalWords = 0
+    @State private var fourLetterWords = 0
+    @State private var fiveLetterWords = 0
+    @State private var sixLetterWords = 0
+    @State private var sevenLetterWords = 0
+    
     @State private var errorTitle = ""
     @State private var errorMessage = ""
     @State private var showingError = false
@@ -22,6 +28,23 @@ struct ContentView: View {
                 Section {
                     TextField("Enter your word", text: $newWord)
                         .autocapitalization(.none)
+                }
+                
+                Section("Score") {
+                    HStack {
+                        VStack {
+                            
+                        }
+                        Text("Total: \(totalWords)")
+                        Spacer()
+                        Text("4L: \(fourLetterWords)")
+                        Spacer()
+                        Text("5L: \(fiveLetterWords)")
+                        Spacer()
+                        Text("6L: \(sixLetterWords)")
+                        Spacer()
+                        Text("7L: \(sevenLetterWords)")
+                    }
                 }
                 
                 Section {
@@ -41,12 +64,21 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage)
             }
+            .navigationBarItems(trailing: Button("New Word", action: startGame))
         }
     }
     
     func addNewWord() {
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard answer.count > 0 else { return }
+        guard answer.count > 3 else {
+            wordError(title: "Word is too short", message: "It's got to be longer than that!")
+            return
+        }
+        
+        guard answer != rootWord else {
+            wordError(title: "Word is the same", message: "Nice Try!")
+            return
+        }
         
         guard isOriginal(word: answer) else {
             wordError(title: "Word used already", message: "Be more original!")
@@ -63,8 +95,23 @@ struct ContentView: View {
             return
         }
         
+        
         withAnimation {
             usedWords.insert(answer, at: 0)
+            
+            totalWords += 1
+            switch answer.count {
+            case 4:
+                fourLetterWords += 1
+            case 5:
+                fiveLetterWords += 1
+            case 6:
+                sixLetterWords += 1
+            case 7:
+                sevenLetterWords += 1
+            default:
+                return
+            }
         }
         
         newWord = ""
@@ -75,6 +122,16 @@ struct ContentView: View {
             if let startWords = try? String(contentsOf: startWordsURL) {
                 let allWords = startWords.components(separatedBy: "\n")
                 rootWord = allWords.randomElement() ?? "silkworm"
+                
+                withAnimation{
+                    usedWords.removeAll()
+                    totalWords = 0
+                    fourLetterWords = 0
+                    fiveLetterWords = 0
+                    sixLetterWords = 0
+                    sevenLetterWords = 0
+                }
+                
                 return
             }
         }
